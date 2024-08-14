@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editable Monthly Data Entry with PDF Export</title>
+    <title>Editable Monthly Data Entry and Line Chart</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         table {
             width: 100%;
@@ -49,9 +47,6 @@
 
             <button type="submit">Add/Update Data</button>
         </form>
-
-        <!-- Button to save as PDF -->
-        <button id="savePdfBtn" style="margin-top: 20px;">Save as PDF</button>
 
         <!-- Table to display inputted data -->
         <h3>Sales Data Table</h3>
@@ -144,38 +139,6 @@
 
         // Initialize the table with empty data
         updateTable();
-
-        // Save the chart and table as a PDF
-        document.getElementById('savePdfBtn').addEventListener('click', function() {
-            const { jsPDF } = window.jspdf;
-
-            // Create a new PDF document
-            const pdf = new jsPDF('p', 'pt', 'a4');
-
-            // Convert the chart to an image
-            html2canvas(document.getElementById('myLineChart')).then(function(canvas) {
-                const imgData = canvas.toDataURL('image/png');
-                pdf.text(20, 20, 'Sales Line Chart');
-                pdf.addImage(imgData, 'PNG', 20, 40, 550, 300);
-
-                // Add the table data
-                pdf.text(20, 360, 'Sales Data Table');
-                const rows = [];
-                labels.forEach((label, index) => {
-                    rows.push([label, data[index] !== null ? data[index] : '']);
-                });
-
-                pdf.autoTable({
-                    head: [['Month', 'Sales']],
-                    body: rows,
-                    startY: 380,
-                    theme: 'grid'
-                });
-
-                // Save the PDF
-                pdf.save('sales_data.pdf');
-            });
-        });
     </script>
 </body>
 </html>
