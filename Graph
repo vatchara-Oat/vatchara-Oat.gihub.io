@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Chart from Table Data</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div style="width: 50%; margin: 0 auto;">
+        <h2>Sales Data</h2>
+
+        <!-- Table containing data -->
+        <table id="dataTable" border="1" cellpadding="5" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Sales</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>January</td>
+                    <td>3</td>
+                </tr>
+                <tr>
+                    <td>February</td>
+                    <td>12</td>
+                </tr>
+                <tr>
+                    <td>March</td>
+                    <td>5</td>
+                </tr>
+                <tr>
+                    <td>April</td>
+                    <td>18</td>
+                </tr>
+                <tr>
+                    <td>May</td>
+                    <td>7</td>
+                </tr>
+                <tr>
+                    <td>June</td>
+                    <td>10</td>
+                </tr>
+                <tr>
+                    <td>July</td>
+                    <td>15</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Sales Line Chart</h2>
+        <canvas id="myLineChart"></canvas>
+    </div>
+
+    <script>
+        // Function to extract data from the table
+        function extractDataFromTable() {
+            const table = document.getElementById('dataTable');
+            const labels = [];
+            const data = [];
+
+            for (let i = 1; i < table.rows.length; i++) {
+                labels.push(table.rows[i].cells[0].innerText);
+                data.push(parseFloat(table.rows[i].cells[1].innerText));
+            }
+
+            return { labels, data };
+        }
+
+        // Extracting data from the table
+        const { labels, data } = extractDataFromTable();
+
+        // Creating the line chart
+        const ctx = document.getElementById('myLineChart').getContext('2d');
+        const myLineChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Sales',
+                    data: data,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    fill: true,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
