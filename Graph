@@ -3,14 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Line Chart from Table Data</title>
+    <title>Editable Monthly Data Entry with PDF Export</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        table {
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+        }
+        input[type="number"] {
+            width: 60px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <div style="width: 50%; margin: 0 auto;">
-        <h2>Sales Data</h2>
+    <div style="width: 70%; margin: 0 auto;">
+        <h2>Input Monthly Sales Data</h2>
 
-        <!-- Table containing data -->
+        <!-- Form for inputting data -->
+        <form id="dataForm">
+            <label for="month">Month:</label>
+            <select id="month" required>
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September">September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December">December</option>
+            </select>
+
+            <label for="sales">Sales:</label>
+            <input type="number" id="sales" required min="0">
+
+            <button type="submit">Add/Update Data</button>
+        </form>
+
+        <!-- Button to save as PDF -->
+        <button id="savePdfBtn" style="margin-top: 20px;">Save as PDF</button>
+
+        <!-- Table to display inputted data -->
+        <h3>Sales Data Table</h3>
         <table id="dataTable" border="1" cellpadding="5" cellspacing="0">
             <thead>
                 <tr>
@@ -19,61 +63,23 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>January</td>
-                    <td>3</td>
-                </tr>
-                <tr>
-                    <td>February</td>
-                    <td>12</td>
-                </tr>
-                <tr>
-                    <td>March</td>
-                    <td>5</td>
-                </tr>
-                <tr>
-                    <td>April</td>
-                    <td>18</td>
-                </tr>
-                <tr>
-                    <td>May</td>
-                    <td>7</td>
-                </tr>
-                <tr>
-                    <td>June</td>
-                    <td>10</td>
-                </tr>
-                <tr>
-                    <td>July</td>
-                    <td>15</td>
-                </tr>
+                <!-- Data rows will be added here dynamically -->
             </tbody>
         </table>
 
-        <h2>Sales Line Chart</h2>
+        <!-- Line chart to visualize the data -->
+        <h3>Sales Line Chart</h3>
         <canvas id="myLineChart"></canvas>
     </div>
 
     <script>
-        // Function to extract data from the table
-        function extractDataFromTable() {
-            const table = document.getElementById('dataTable');
-            const labels = [];
-            const data = [];
-
-            for (let i = 1; i < table.rows.length; i++) {
-                labels.push(table.rows[i].cells[0].innerText);
-                data.push(parseFloat(table.rows[i].cells[1].innerText));
-            }
-
-            return { labels, data };
-        }
-
-        // Extracting data from the table
-        const { labels, data } = extractDataFromTable();
-
-        // Creating the line chart
+        const form = document.getElementById('dataForm');
+        const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
         const ctx = document.getElementById('myLineChart').getContext('2d');
+
+        let labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        let data = new Array(12).fill(null);
+
         const myLineChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -94,6 +100,81 @@
                     }
                 }
             }
+        });
+
+        // Function to update the table with data
+        function updateTable() {
+            tableBody.innerHTML = '';
+            data.forEach((value, index) => {
+                const newRow = tableBody.insertRow();
+                const monthCell = newRow.insertCell(0);
+                const salesCell = newRow.insertCell(1);
+
+                monthCell.innerText = labels[index];
+                salesCell.innerHTML = `<input type="number" value="${value !== null ? value : ''}" onchange="updateSales(${index}, this.value)">`;
+            });
+        }
+
+        // Function to update sales data when input changes
+        function updateSales(index, value) {
+            data[index] = value ? parseFloat(value) : null;
+            myLineChart.update();
+        }
+
+        // Add or update data on form submission
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const month = document.getElementById('month').value;
+            const sales = parseFloat(document.getElementById('sales').value);
+            const monthIndex = labels.indexOf(month);
+
+            // Update data array
+            data[monthIndex] = sales;
+
+            // Update the chart
+            myLineChart.update();
+
+            // Update the table
+            updateTable();
+
+            // Reset the form
+            form.reset();
+        });
+
+        // Initialize the table with empty data
+        updateTable();
+
+        // Save the chart and table as a PDF
+        document.getElementById('savePdfBtn').addEventListener('click', function() {
+            const { jsPDF } = window.jspdf;
+
+            // Create a new PDF document
+            const pdf = new jsPDF('p', 'pt', 'a4');
+
+            // Convert the chart to an image
+            html2canvas(document.getElementById('myLineChart')).then(function(canvas) {
+                const imgData = canvas.toDataURL('image/png');
+                pdf.text(20, 20, 'Sales Line Chart');
+                pdf.addImage(imgData, 'PNG', 20, 40, 550, 300);
+
+                // Add the table data
+                pdf.text(20, 360, 'Sales Data Table');
+                const rows = [];
+                labels.forEach((label, index) => {
+                    rows.push([label, data[index] !== null ? data[index] : '']);
+                });
+
+                pdf.autoTable({
+                    head: [['Month', 'Sales']],
+                    body: rows,
+                    startY: 380,
+                    theme: 'grid'
+                });
+
+                // Save the PDF
+                pdf.save('sales_data.pdf');
+            });
         });
     </script>
 </body>
