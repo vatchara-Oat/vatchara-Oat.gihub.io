@@ -1,12 +1,96 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Page Title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload with Map Coordinates or Link</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 20px;
+        }
+        #map {
+            height: 500px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        #imagePreview {
+            max-width: 100%;
+            height: auto;
+            display: none;
+        }
+    </style>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </head>
 <body>
+    <h2>Upload Image and Show on Map</h2>
 
-<h1>This is a Heading</h1>
-<p>This is a paragraph.</p>
+    <!-- Form to upload image and input coordinates or map link -->
+    <form id="uploadForm">
+        <input type="file" id="imageInput" accept="image/*" required><br><br>
+        <label for="latitude">Latitude:</label>
+        <input type="number" id="latitude" step="any"><br><br>
+        <label for="longitude">Longitude:</label>
+        <input type="number" id="longitude" step="any"><br><br>
+        <label for="mapLink">Or paste Google Maps Link:</label>
+        <input type="url" id="mapLink" placeholder="https://maps.google.com/..."><br><br>
+        <button type="submit">Submit</button>
+    </form>
 
+    <!-- Container to display map -->
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([0, 0], 2); // Initial map view
+
+        // Leaflet tile layer for the map
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Get image file
+            const file = document.getElementById('imageInput').files[0];
+            const mapLink = document.getElementById('mapLink').value;
+            let latitude = parseFloat(document.getElementById('latitude').value);
+            let longitude = parseFloat(document.getElementById('longitude').value);
+
+            if (mapLink && (!latitude || !longitude)) {
+                // Extract coordinates from Google Maps link
+                const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+                const match = mapLink.match(regex);
+                if (match) {
+                    latitude = parseFloat(match[1]);
+                    longitude = parseFloat(match[2]);
+                } else {
+                    alert('Invalid Google Maps link.');
+                    return;
+                }
+            }
+
+            if (file && latitude && longitude) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageUrl = e.target.result;
+
+                    // Update map view and add marker with image popup
+                    map.setView([latitude, longitude], 13);
+                    const marker = L.marker([latitude, longitude]).addTo(map);
+                    marker.bindPopup(`<img src="${imageUrl}" id="imagePreview" alt="Image" />`).openPopup();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Please provide an image and valid coordinates.');
+            }
+        });
+    </script>
 </body>
 </html>
+
+
